@@ -16,7 +16,7 @@ spec:
   volumes:
     - name: web-content
       hostPath:
-        path: ./data/webpages
+        path: /mnt/data/webpages
         type: DirectoryOrCreate
 ---
 apiVersion: v1
@@ -30,4 +30,5 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
+      nodePort: 30081
   type: NodePort
