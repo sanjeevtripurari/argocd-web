@@ -51,4 +51,93 @@ Forwarding from 127.0.0.1:8080 -> 8080
 Forwarding from [::1]:8080 -> 8080
 Handling connection for 8080
 
+UI password
+$ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+
+# Create git repo
+
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin git@github.com:sanjeevtripurari/argocd-web.git
+git push -u origin main
+
+
+Addin ninx
+
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        webquote/
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$ git add -a
+error: unknown switch `a'
+usage: git add [<options>] [--] <pathspec>...
+
+    -n, --[no-]dry-run    dry run
+    -v, --[no-]verbose    be verbose
+
+    -i, --[no-]interactive
+                          interactive picking
+    -p, --[no-]patch      select hunks interactively
+    -e, --[no-]edit       edit current diff and apply
+    -f, --[no-]force      allow adding otherwise ignored files
+    -u, --[no-]update     update tracked files
+    --[no-]renormalize    renormalize EOL of tracked files (implies -u)
+    -N, --[no-]intent-to-add
+                          record only the fact that the path will be added later
+    -A, --[no-]all        add changes from all tracked and untracked files
+    --[no-]ignore-removal ignore paths removed in the working tree (same as --no-all)
+    --[no-]refresh        don't add, only refresh the index
+    --[no-]ignore-errors  just skip files which cannot be added because of errors
+    --[no-]ignore-missing check if - even missing - files are ignored in dry run
+    --[no-]sparse         allow updating entries outside of the sparse-checkout cone
+    --[no-]chmod (+|-)x   override the executable bit of the listed files
+    --[no-]pathspec-from-file <file>
+                          read pathspec from file
+    --[no-]pathspec-file-nul
+                          with --pathspec-from-file, pathspec elements are separated with NUL character
+
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$ git add -A
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        new file:   webquote/k8s/nginx-deployment.yaml
+
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$ git commit -m "commit nginx-deployment" -a
+[main eeb84d2] commit nginx-deployment
+ 1 file changed, 33 insertions(+)
+ create mode 100644 webquote/k8s/nginx-deployment.yaml
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$
+
+Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
+$ git push -u origin main
+Enumerating objects: 6, done.
+Counting objects: 100% (6/6), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (5/5), 640 bytes | 160.00 KiB/s, done.
+Total 5 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+To github.com:sanjeevtripurari/argocd-web.git
+   ef37d91..eeb84d2  main -> main
+branch 'main' set up to track 'origin/main'.
+
 ```
