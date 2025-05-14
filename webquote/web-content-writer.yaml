@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: content-writer
+spec:
+  template:
+    spec:
+      containers:
+        - name: writer
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              mkdir -p /webpages;
+              echo '<html><head><script>
+                function changeLang(lang) {
+                  document.getElementById("quote").innerText = {
+                    en: "The best way to predict the future is to invent it.",
+                    fr: "La meilleure façon de prédire l'avenir est de l'inventer.",
+                    hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
+                  }[lang];
+                }
+              </script></head>
+              <body style="background-color: lightblue; font-family: sans-serif;">
+                <select onchange="changeLang(this.value)">
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="hi">हिन्दी</option>
+                </select>
+                <h1 id="quote">The best way to predict the future is to invent it.</h1>
+              </body></html>' > /webpages/index.html;
+          volumeMounts:
+            - name: web-content
+              mountPath: /webpages
+      restartPolicy: Never
+      volumes:
+        - name: web-content
+          hostPath:
+            path: /mnt/data/webpages
+            type: DirectoryOrCreate
+  backoffLimit: 1
