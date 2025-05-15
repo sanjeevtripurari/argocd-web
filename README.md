@@ -175,4 +175,14 @@ kube-system          Active   26d
 local-path-storage   Active   26d
 trino                Active   8d
 webquote             Active   9h
+
+$ kubectl get pod,svc -n webquote
+NAME                       READY   STATUS      RESTARTS   AGE
+pod/config-applier-lszj8   0/1     Completed   0          42m
+pod/content-writer-47v4q   0/1     Completed   0          42m
+pod/nginx-web              1/1     Running     0          9h
+
+NAME                    TYPE       CLUSTER-IP    EXTERNAL-IP   PORT(S)        AGE
+service/nginx-service   NodePort   10.96.44.87   <none>        80:30081/TCP   9h
+
 ```
