@@ -1,26 +1,42 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: page-config
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+data:
+  default-lang: "en"
+  bg-color: "lightblue"
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: content-writer
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   template:
     spec:
       containers:
         - name: writer
-          image: busybox
+          image: alpine:latest
           command: ["/bin/sh", "-c"]
           args:
             - |
+              apk add --no-cache fortune;
               mkdir -p /webpages;
-              echo '<!DOCTYPE html>
+              QUOTE=$(fortune | head -n 1 | tr -d '"');
+              cat <<EOF > /webpages/index.html
+              <!DOCTYPE html>
               <html>
               <head>
                 <meta charset="UTF-8">
                 <script>
                   function changeLang(lang) {
                     document.getElementById("quote").innerText = {
-                      en: "The best way to predict the future is to invent it.",
-                      fr: "La meilleure façon de prédire l\\u0027avenir est de l\\u0027inventer.",
+                      en: "$QUOTE",
+                      fr: "La meilleure façon de prédire l'avenir est de l'inventer.",
                       hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
                     }[lang];
                   }
@@ -32,9 +48,10 @@ spec:
                   <option value="fr">Français</option>
                   <option value="hi">हिन्दी</option>
                 </select>
-                <h1 id="quote">The best way to predict the future is to invent it.</h1>
+                <h1 id="quote">$QUOTE</h1>
               </body>
-              </html>' > /webpages/index.html;
+              </html>
+              EOF
           volumeMounts:
             - name: web-content
               mountPath: /webpages
@@ -44,4 +61,65 @@ spec:
           hostPath:
             path: /mnt/data/webpages
             type: DirectoryOrCreate
+  backoffLimit: 1
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: config-applier
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  template:
+    spec:
+      initContainers:
+        - name: wait-for-content
+          image: busybox
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "Waiting for /webpages/index.html to exist...";
+              while [ ! -f /webpages/index.html ]; do
+                sleep 1;
+              done;
+              echo "Found index.html!";
+          volumeMounts:
+            - name: web-content
+              mountPath: /webpages
+
+      containers:
+        - name: config-applier
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              LANG=$(cat /config/default-lang)
+              COLOR=$(cat /config/bg-color)
+
+              # Replace background color
+              sed -i "s/background-color: [^;]*/background-color: $COLOR/" /webpages/index.html
+
+              # Replace default quote based on language
+              QUOTE=""
+              case "$LANG" in
+                en) QUOTE='The best way to predict the future is to invent it.' ;;
+                fr) QUOTE="La meilleure façon de prédire l'avenir est de l'inventer." ;;
+                hi) QUOTE='भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।' ;;
+              esac
+
+              sed -i "s|<h1 id=\"quote\">.*</h1>|<h1 id=\"quote\">$QUOTE</h1>|" /webpages/index.html
+          volumeMounts:
+            - name: web-content
+              mountPath: /webpages
+            - name: config
+              mountPath: /config
+      restartPolicy: Never
+      volumes:
+        - name: web-content
+          hostPath:
+            path: /mnt/data/webpages
+            type: DirectoryOrCreate
+        - name: config
+          configMap:
+            name: page-config
   backoffLimit: 1
