@@ -67,10 +67,20 @@ CURRENT   NAME                 CLUSTER              AUTHINFO             NAMESPA
 $ kubectl create namespace argocd
 namespace/argocd created
 
+$ kubectl get namespaces
+NAME                 STATUS   AGE
+argocd               Active   10h
+default              Active   26d
+instavote            Active   26d
+kube-node-lease      Active   26d
+kube-public          Active   26d
+kube-system          Active   26d
+local-path-storage   Active   26d
+trino                Active   8d
+
 ## Install argocd 
 
 $ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-
 
 ## Check argocd
 
@@ -102,6 +112,7 @@ Forwarding from [::1]:8080 -> 8080
 Handling connection for 8080
 
 ## UI password
+
 $ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 
 ## Create git repo
@@ -112,7 +123,6 @@ git commit -m "first commit"
 git branch -M main
 git remote add origin git@github.com:sanjeevtripurari/argocd-web.git
 git push -u origin main
-
 
 ## Adding project to git repo
 
@@ -152,4 +162,17 @@ To github.com:sanjeevtripurari/argocd-web.git
    ef37d91..eeb84d2  main -> main
 branch 'main' set up to track 'origin/main'.
 
+## auto creation of namespace: webquote
+
+$ kubectl get namespaces
+NAME                 STATUS   AGE
+argocd               Active   10h
+default              Active   26d
+instavote            Active   26d
+kube-node-lease      Active   26d
+kube-public          Active   26d
+kube-system          Active   26d
+local-path-storage   Active   26d
+trino                Active   8d
+webquote             Active   9h
 ```
