@@ -1,8 +1,51 @@
 
-# argocd-web
+# webquote - ArgoCD Demo Application
+
+`webquote` is a Kubernetes-based demo project designed to showcase GitOps deployments using [ArgoCD](https://argo-cd.readthedocs.io). It features a dynamic quote-rendering webpage served by NGINX, with language and color customizations applied through Kubernetes jobs and config maps.
+
+## 📦 Project Structure
+
+This repository contains Kubernetes manifests for the following components:
+
+- `nginx-deployment.yaml`:  
+  Deploys a lightweight `nginx:alpine` pod and exposes it via a NodePort service on port `30081`.
+
+- `web-content-writer.yaml`:  
+  Includes:
+  - A `ConfigMap` named `page-config` containing:
+    - Default language
+    - Background color
+  - A `Job` named `content-writer` that:
+    - Installs `fortune` and generates a random quote
+    - Creates a multilingual HTML page with a `<select>` dropdown for switching languages
+  - A `Job` named `config-applier` that:
+    - Waits for `index.html` to be written
+    - Applies configuration values (default language & background color) from the `ConfigMap`
+
+- `argocd-webquote.yaml`:  
+  Defines the [ArgoCD Application](https://argo-cd.readthedocs.io/en/stable/operator-manual/application/) that syncs this app to your Kubernetes cluster.  
+  Features:
+  - Auto-sync enabled
+  - Namespace auto-creation
+  - Sync retry with exponential backoff
+  - Rollback on sync failure
+
+## 🚀 Deployment with ArgoCD
+
+1. **Install ArgoCD** (if not already installed)  
+   See: [https://argo-cd.readthedocs.io/en/stable/getting_started/](https://argo-cd.readthedocs.io/en/stable/getting_started/)
+
+2. **Login to ArgoCD CLI or Web UI**
+
+3. **Create the Application**
+
+   ```bash
+   kubectl apply -n argocd -f argocd-webquote.yaml
 
 ```
-Ceck contexts
+
+# On host
+## Check contexts
 
 $ kubectl config get-contexts
 CURRENT   NAME                 CLUSTER              AUTHINFO             NAMESPACE
@@ -12,17 +55,17 @@ CURRENT   NAME                 CLUSTER              AUTHINFO             NAMESPA
 *         kind-kind            kind-kind            kind-kind            datapipeline
           kind-kindcluster     kind-kindcluster     kind-kindcluster
 
-Create namespace
+## Create namespace
 
 $ kubectl create namespace argocd
 namespace/argocd created
 
-Install argocd 
+## Install argocd 
 
 $ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 
-Ceck argocd
+## Check argocd
 
 $ kubectl get pod,svc -n argocd
 NAME                                                    READY   STATUS              RESTARTS   AGE
@@ -44,17 +87,17 @@ service/argocd-repo-server                        ClusterIP   10.96.167.196   <n
 service/argocd-server                             ClusterIP   10.96.38.0      <none>        80/TCP,443/TCP               85s
 service/argocd-server-metrics                     ClusterIP   10.96.233.179   <none>        8083/TCP                     85s
 
-Port forward
+## Port forward
 
 $ kubectl port-forward svc/argocd-server -n argocd 8080:443
 Forwarding from 127.0.0.1:8080 -> 8080
 Forwarding from [::1]:8080 -> 8080
 Handling connection for 8080
 
-UI password
+## UI password
 $ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
 
-# Create git repo
+## Create git repo
 
 git init
 git add README.md
@@ -64,7 +107,7 @@ git remote add origin git@github.com:sanjeevtripurari/argocd-web.git
 git push -u origin main
 
 
-Addin ninx
+## Adding project to git repo
 
 $ git status
 On branch main
@@ -74,61 +117,23 @@ Untracked files:
   (use "git add <file>..." to include in what will be committed)
         webquote/
 
-nothing added to commit but untracked files present (use "git add" to track)
-
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
-$ git add -a
-error: unknown switch `a'
-usage: git add [<options>] [--] <pathspec>...
-
-    -n, --[no-]dry-run    dry run
-    -v, --[no-]verbose    be verbose
-
-    -i, --[no-]interactive
-                          interactive picking
-    -p, --[no-]patch      select hunks interactively
-    -e, --[no-]edit       edit current diff and apply
-    -f, --[no-]force      allow adding otherwise ignored files
-    -u, --[no-]update     update tracked files
-    --[no-]renormalize    renormalize EOL of tracked files (implies -u)
-    -N, --[no-]intent-to-add
-                          record only the fact that the path will be added later
-    -A, --[no-]all        add changes from all tracked and untracked files
-    --[no-]ignore-removal ignore paths removed in the working tree (same as --no-all)
-    --[no-]refresh        don't add, only refresh the index
-    --[no-]ignore-errors  just skip files which cannot be added because of errors
-    --[no-]ignore-missing check if - even missing - files are ignored in dry run
-    --[no-]sparse         allow updating entries outside of the sparse-checkout cone
-    --[no-]chmod (+|-)x   override the executable bit of the listed files
-    --[no-]pathspec-from-file <file>
-                          read pathspec from file
-    --[no-]pathspec-file-nul
-                          with --pathspec-from-file, pathspec elements are separated with NUL character
-
-
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
 $ git add -A
 
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
 $ git status
 On branch main
 Your branch is up to date with 'origin/main'.
 
 Changes to be committed:
   (use "git restore --staged <file>..." to unstage)
-        new file:   webquote/k8s/nginx-deployment.yaml
+        new file:   webquote/nginx-deployment.yaml
 
 
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
 $ git commit -m "commit nginx-deployment" -a
 [main eeb84d2] commit nginx-deployment
  1 file changed, 33 insertions(+)
- create mode 100644 webquote/k8s/nginx-deployment.yaml
+ create mode 100644 webquote/nginx-deployment.yaml
 
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
-$
 
-Madhavi@madhavikrishna /cygdrive/d/Sanjeev/docker/kubernetes/argocd-web
 $ git push -u origin main
 Enumerating objects: 6, done.
 Counting objects: 100% (6/6), done.

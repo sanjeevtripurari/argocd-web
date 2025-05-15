@@ -1,0 +1,22 @@
+project: default
+source:
+  repoURL: https://github.com/sanjeevtripurari/argocd-web.git
+  path: webquote
+  targetRevision: HEAD
+destination:
+  server: https://kubernetes.default.svc
+  namespace: webquote
+syncPolicy:
+  automated: {}
+  syncOptions:
+    - PruneLast=true
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=true
+  retry:
+    limit: 2
+    backoff:
+      duration: 5s
+      factor: 2
+      maxDuration: 3m0s
+rollback:
+  enable: true                  # enable rollback on failed sync
