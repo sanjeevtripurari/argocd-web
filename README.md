@@ -5,6 +5,15 @@
 
 ## 📦 Project Structure
 
+```
+argocd-web
+├── README.md
+└── webquote
+    ├── argocd-webquote.yaml
+    ├── nginx-deployment.yaml
+    └── web-content-writer.yaml
+
+```
 This repository contains Kubernetes manifests for the following components:
 
 - `nginx-deployment.yaml`:  
@@ -36,8 +45,10 @@ This repository contains Kubernetes manifests for the following components:
    See: [https://argo-cd.readthedocs.io/en/stable/getting_started/](https://argo-cd.readthedocs.io/en/stable/getting_started/)
 
 2. **Login to ArgoCD CLI or Web UI**
+   ![image](https://github.com/user-attachments/assets/46b40deb-18e2-4c6d-b0dd-a8d031dab5e6)
 
-3. **Create the Application**
+
+4. **Create the Application Stack**
 
    ```bash
    kubectl apply -n argocd -f argocd-webquote.yaml
