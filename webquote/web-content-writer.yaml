@@ -12,15 +12,20 @@ spec:
           args:
             - |
               mkdir -p /webpages;
-              echo '<html><head><script>
-                function changeLang(lang) {
-                  document.getElementById("quote").innerText = {
-                    en: "The best way to predict the future is to invent it.",
-                    fr: "La meilleure façon de prédire l'avenir est de l'inventer.",
-                    hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
-                  }[lang];
-                }
-              </script></head>
+              echo '<!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="UTF-8">
+                <script>
+                  function changeLang(lang) {
+                    document.getElementById("quote").innerText = {
+                      en: "The best way to predict the future is to invent it.",
+                      fr: "La meilleure façon de prédire l\\u0027avenir est de l\\u0027inventer.",
+                      hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
+                    }[lang];
+                  }
+                </script>
+              </head>
               <body style="background-color: lightblue; font-family: sans-serif;">
                 <select onchange="changeLang(this.value)">
                   <option value="en">English</option>
@@ -28,7 +33,8 @@ spec:
                   <option value="hi">हिन्दी</option>
                 </select>
                 <h1 id="quote">The best way to predict the future is to invent it.</h1>
-              </body></html>' > /webpages/index.html;
+              </body>
+              </html>' > /webpages/index.html;
           volumeMounts:
             - name: web-content
               mountPath: /webpages
