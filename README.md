@@ -50,11 +50,7 @@ This repository contains Kubernetes manifests for the following components:
 
 4. **Create the Application Stack**
 
-   ```bash
-   kubectl apply -n argocd -f argocd-webquote.yaml
-
 ```
-
 # On host
 ## Check contexts
 
