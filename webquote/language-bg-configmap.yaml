@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: page-config
-data:
-  default-lang: "en"
-  bg-color: "lightblue"
