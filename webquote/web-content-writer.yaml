@@ -9,14 +9,21 @@ data:
   default-lang: "en"
   bg-color: "lightblue"
 ---
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: content-writer
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: content-writer
   template:
+    metadata:
+      labels:
+        app: content-writer
     spec:
       containers:
         - name: writer
@@ -24,96 +31,68 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              apk add --no-cache fortune;
+              apk add --no-cache fortune bash coreutils;
               mkdir -p /webpages;
-              QUOTE=$(fortune | head -n 1 | tr -d '"');
-              cat <<EOF > /webpages/index.html
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="UTF-8">
-                <script>
-                  function changeLang(lang) {
-                    document.getElementById("quote").innerText = {
-                      en: "$QUOTE",
-                      fr: "La meilleure façon de prédire l'avenir est de l'inventer.",
-                      hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
-                    }[lang];
-                  }
-                </script>
-              </head>
-              <body style="background-color: lightblue; font-family: sans-serif;">
-                <select onchange="changeLang(this.value)">
-                  <option value="en">English</option>
-                  <option value="fr">Français</option>
-                  <option value="hi">हिन्दी</option>
-                </select>
-                <h1 id="quote">$QUOTE</h1>
-              </body>
-              </html>
-              EOF
-          volumeMounts:
-            - name: web-content
-              mountPath: /webpages
-      restartPolicy: Never
-      volumes:
-        - name: web-content
-          hostPath:
-            path: /mnt/data/webpages
-            type: DirectoryOrCreate
-  backoffLimit: 1
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: config-applier
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  template:
-    spec:
-      initContainers:
-        - name: wait-for-content
-          image: busybox
-          command: ['sh', '-c']
-          args:
-            - |
-              echo "Waiting for /webpages/index.html to exist...";
-              while [ ! -f /webpages/index.html ]; do
-                sleep 1;
-              done;
-              echo "Found index.html!";
-          volumeMounts:
-            - name: web-content
-              mountPath: /webpages
+              while true; do
+                # Read config
+                LANG=$(cat /config/default-lang)
+                BG_COLOR=$(cat /config/bg-color)
 
-      containers:
-        - name: config-applier
-          image: busybox
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              LANG=$(cat /config/default-lang)
-              COLOR=$(cat /config/bg-color)
+                # Decide contrast color (text color)
+                is_light_color() {
+                  case "$1" in
+                    white|light*|yellow|beige|ivory|azure|mintcream) return 0 ;;
+                    *) return 1 ;;
+                  esac
+                }
+                TEXT_COLOR="white"
+                if is_light_color "$BG_COLOR"; then
+                  TEXT_COLOR="black"
+                fi
 
-              # Replace background color
-              sed -i "s/background-color: [^;]*/background-color: $COLOR/" /webpages/index.html
+                # Choose quote
+                case "$LANG" in
+                  en) QUOTE=$(fortune | head -n 1 | tr -d '"') ;;
+                  fr) QUOTE="La meilleure façon de prédire l'avenir est de l'inventer." ;;
+                  hi) QUOTE="भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।" ;;
+                  *) QUOTE="The best way to predict the future is to invent it." ;;
+                esac
 
-              # Replace default quote based on language
-              QUOTE=""
-              case "$LANG" in
-                en) QUOTE='The best way to predict the future is to invent it.' ;;
-                fr) QUOTE="La meilleure façon de prédire l'avenir est de l'inventer." ;;
-                hi) QUOTE='भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।' ;;
-              esac
+                cat <<EOF > /webpages/index.html
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <script>
+                    function changeLang(lang) {
+                      document.getElementById("quote").innerText = {
+                        en: "$QUOTE",
+                        fr: "La meilleure façon de prédire l'avenir est de l'inventer.",
+                        hi: "भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।"
+                      }[lang];
+                    }
+                  </script>
+                </head>
+                <body style="background-color: $BG_COLOR; color: $TEXT_COLOR; font-family: sans-serif;">
+                  <select onchange="changeLang(this.value)">
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="hi">हिन्दी</option>
+                  </select>
+                  <h1 id="quote">$QUOTE</h1>
+                </body>
+                </html>
+                EOF
 
-              sed -i "s|<h1 id=\"quote\">.*</h1>|<h1 id=\"quote\">$QUOTE</h1>|" /webpages/index.html
+                echo "[$(date)] Updated /webpages/index.html with $LANG quote and $BG_COLOR background."
+                sleep 600
+              done
           volumeMounts:
             - name: web-content
               mountPath: /webpages
             - name: config
               mountPath: /config
-      restartPolicy: Never
+      restartPolicy: Always
       volumes:
         - name: web-content
           hostPath:
@@ -122,4 +101,3 @@ spec:
         - name: config
           configMap:
             name: page-config
-  backoffLimit: 1
