@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: config-applier
+spec:
+  template:
+    spec:
+      containers:
+        - name: config-applier
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              LANG=$(cat /config/default-lang)
+              COLOR=$(cat /config/bg-color)
+              sed -i "s/background-color: [^;]*/background-color: $COLOR/" /webpages/index.html
+              sed -i "s/id=\"quote\">.*</id=\"quote\">$(case $LANG in en) echo 'The best way to predict the future is to invent it.';; fr) echo 'La meilleure façon de prédire l\\'avenir est de l\\'inventer.';; hi) echo 'भविष्य की भविष्यवाणी करने का सबसे अच्छा तरीका है उसे बनाना।';; esac)</" /webpages/index.html
+          volumeMounts:
+            - name: web-content
+              mountPath: /webpages
+            - name: config
+              mountPath: /config
+      restartPolicy: Never
+      volumes:
+        - name: web-content
+          hostPath:
+            path: /mnt/data/webpages
+            type: DirectoryOrCreate
+        - name: config
+          configMap:
+            name: page-config
+  backoffLimit: 1
